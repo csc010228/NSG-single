@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
-#include <mutex>
-#include <omp.h>
 #include <string>
 #include <vector>
 
@@ -21,7 +19,6 @@ struct NNDescent {
   struct Nhood {
     std::vector<Neighbor> pool; // candidate pool (a max heap) ，里面存储的是近似的最近邻节点，按照邻居到该节点的距离组织成大顶堆的形式
     int M;                      // pool 的大小
-    std::mutex lock;
     std::vector<int> nn_new, nn_old, rnn_new, rnn_old;        // 这四个vector的大小是 2 * M，并且里面存储的都是不重复的数据的编号，并且按照升序排列
 
     Nhood(std::mt19937 &rng, int s, int64_t N) {
@@ -49,7 +46,6 @@ struct NNDescent {
 
     // 尝试将编号为 id ，与当前节点距离为 dist 的节点插入当前节点的 pool 中
     void insert(int id, float dist) {
-      std::scoped_lock guard(lock);
       if (dist > pool.front().distance)
         return;
       for (int i = 0; i < (int)pool.size(); i++) {
@@ -129,10 +125,8 @@ struct NNDescent {
         graph.emplace_back(rng, S, nb);
       }
     }
-#pragma omp parallel
     {
-      std::mt19937 rng(random_seed * 7741 + omp_get_thread_num());
-#pragma omp for
+      std::mt19937 rng(random_seed * 7741);
       // 随机初始化所有节点的 pool
       // 初始化完成之后的 pool 存储的邻居数量上限是 L ，目前装有 S 或者 S - 1 个随机生成的邻居（不包含节点自身）
       // 并将每个节点的 pool 按照其中邻居到该节点的距离组织成一个大顶堆
@@ -156,7 +150,7 @@ struct NNDescent {
     int num_eval = std::min((int64_t)100, nb);
     std::vector<int> eval_points(num_eval);
     std::vector<std::vector<int>> eval_gt(num_eval);
-    std::mt19937 rng(random_seed * 6577 + omp_get_thread_num());
+    std::mt19937 rng(random_seed * 6577);
     GenRandom(rng, eval_points.data(), num_eval, nb);
     GenEvalGt(eval_points, eval_gt);
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -173,7 +167,6 @@ struct NNDescent {
 
   // 更新所有节点的 pool
   void Join() {
-#pragma omp parallel for default(shared) schedule(dynamic, 100)
     // 遍历所有的节点，计算每一个节点的 nn_new 内部的所有节点的两两组合以及 nn_new 和 nn_old 之间的节点的两两组合的距离，并且尝试更新这些节点的 pool
     for (int u = 0; u < nb; u++) {
       graph[u].join([&](int i, int j) {
@@ -187,13 +180,11 @@ struct NNDescent {
   }
 
   void Update() {
-#pragma omp parallel for
     // 清空所有节点的 nn_new 和 nn_old
     for (int i = 0; i < nb; i++) {
       std::vector<int>().swap(graph[i].nn_new);               // 这种技巧通常被用来在清空一个 std::vector 对象时，同时释放它所占用的内存空间，而不需要重新分配新的内存空间
       std::vector<int>().swap(graph[i].nn_old);
     }
-#pragma omp parallel for
     // 对每一个节点的 pool 根据距离进行升序排序，并且保证 pool 存储的邻居数量都不超过 L
     // 以某种方式更新每一个节点的 M
     for (int n = 0; n < nb; ++n) {
@@ -213,11 +204,9 @@ struct NNDescent {
       }
       nn.M = l;
     }
-#pragma omp parallel
     {
-      std::mt19937 rng(random_seed * 5081 + omp_get_thread_num());
-#pragma omp for
-      // TODO
+      std::mt19937 rng(random_seed * 5081);
+      // TO BE NOTED
       for (int n = 0; n < nb; ++n) {
         auto &node = graph[n];
         auto &nn_new = node.nn_new;
@@ -228,7 +217,6 @@ struct NNDescent {
           if (nn.flag) {
             nn_new.push_back(nn.id);
             if (nn.distance > other.pool.back().distance) {
-              std::scoped_lock guard(other.lock);
               if ((int)other.rnn_new.size() < R) {
                 other.rnn_new.push_back(n);
               } else {
@@ -240,7 +228,6 @@ struct NNDescent {
           } else {
             nn_old.push_back(nn.id);
             if (nn.distance > other.pool.back().distance) {
-              std::scoped_lock guard(other.lock);
               if ((int)other.rnn_old.size() < R) {
                 other.rnn_old.push_back(n);
               } else {
@@ -253,7 +240,6 @@ struct NNDescent {
         std::make_heap(node.pool.begin(), node.pool.end());
       }
     }
-#pragma omp parallel for
     // 将每个节点的 rnn_new 插入到 nn_new 中， rnn_old 插入到 nn_old 中，然后将 rnn_new 和 rnn_old 清空
     // 确保每个节点的 nn_old 存储的节点数量不超过 2 * R
     for (int i = 0; i < nb; ++i) {
@@ -274,7 +260,6 @@ struct NNDescent {
 
   void GenEvalGt(const std::vector<int> &eval_set,
                  std::vector<std::vector<int>> &eval_gt) {
-#pragma omp parallel for
     for (int i = 0; i < (int)eval_set.size(); i++) {
       std::vector<Neighbor> tmp;
       for (int j = 0; j < nb; j++) {

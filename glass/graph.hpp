@@ -6,8 +6,8 @@
 #include <memory>
 #include <vector>
 
-#include "glass/hnsw/HNSWInitializer.hpp"
 #include "glass/memory.hpp"
+#include "glass/simd/distance.hpp"
 
 namespace glass {
 
@@ -19,8 +19,6 @@ template <typename node_t> struct Graph {
   int K;                // 最近邻节点个数
 
   node_t *data = nullptr;                   // N * K 大小的邻接列表
-
-  std::unique_ptr<HNSWInitializer> initializer = nullptr;
 
   std::vector<int> eps;
 
@@ -37,9 +35,6 @@ template <typename node_t> struct Graph {
       for (int j = 0; j < K; ++j) {
         at(i, j) = g.at(i, j);
       }
-    }
-    if (g.initializer) {
-      initializer = std::make_unique<HNSWInitializer>(*g.initializer);
     }
   }
 
@@ -66,12 +61,8 @@ template <typename node_t> struct Graph {
 
   template <typename Pool, typename Computer>
   void initialize_search(Pool &pool, const Computer &computer) const {
-    if (initializer) {
-      initializer->initialize(pool, computer);
-    } else {
-      for (auto ep : eps) {
-        pool.insert(ep, computer(ep));
-      }
+    for (auto ep : eps) {
+      pool.insert(ep, computer(ep));
     }
   }
 
@@ -84,9 +75,6 @@ template <typename node_t> struct Graph {
     writer.write((char *)&N, 4);
     writer.write((char *)&K, 4);
     writer.write((char *)data, N * K * 4);
-    if (initializer) {
-      initializer->save(writer);
-    }
     printf("Graph Saving done\n");
   }
 
@@ -103,8 +91,7 @@ template <typename node_t> struct Graph {
     data = (node_t *)alloc2M((size_t)N * K * 4);
     reader.read((char *)data, N * K * 4);
     if (reader.peek() != EOF) {
-      initializer = std::make_unique<HNSWInitializer>(N);
-      initializer->load(reader);
+      ;
     }
     printf("Graph Loding done\n");
   }

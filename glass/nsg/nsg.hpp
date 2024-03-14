@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <random>
 #include <stack>
 
@@ -64,7 +63,6 @@ struct NSG : public Builder {
       final_graph.init(n, R);
       std::fill_n(final_graph.data, n * R, EMPTY_ID);
       final_graph.eps = {ep};
-// #pragma omp parallel for
       for (int i = 0; i < n; i++) {
         int cnt = 0;
         for (int j = 0; j < R; j++) {
@@ -77,7 +75,6 @@ struct NSG : public Builder {
         }
       }
     }
-    // [[maybe_unused]] int num_attached = tree_grow(degrees);
     int max = 0, min = 1e6;
     double avg = 0;
     for (int i = 0; i < n; i++) {
@@ -183,8 +180,7 @@ struct NSG : public Builder {
 
   void link(const Graph<int> &knng, Graph<Node> &graph) {
     auto st = std::chrono::high_resolution_clock::now();
-    std::atomic<int> cnt{0};
-// #pragma omp parallel for schedule(dynamic)
+    int cnt = 0;
     for (int i = 0; i < nb; i++) {
       std::vector<Node> pool;
       std::vector<Neighbor> tmp;
@@ -202,10 +198,8 @@ struct NSG : public Builder {
     auto ela = std::chrono::duration<double>(ed - st).count();
     printf("NSG building cost: %.2lfs\n", ela);
 
-    std::vector<std::mutex> locks(nb);
-#pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < nb; ++i) {
-      add_reverse_links(i, locks, graph);
+      add_reverse_links(i, graph);
     }
   }
 
@@ -262,8 +256,7 @@ struct NSG : public Builder {
     }
   }
 
-  void add_reverse_links(int q, std::vector<std::mutex> &locks,
-                         Graph<Node> &graph) {
+  void add_reverse_links(int q, Graph<Node> &graph) {
     for (int i = 0; i < R; i++) {
       if (graph.at(q, i).id == EMPTY_ID) {
         break;
@@ -275,7 +268,6 @@ struct NSG : public Builder {
       std::vector<Node> tmp_pool;
       int dup = 0;
       {
-        LockGuard guard(locks[des]);
         for (int j = 0; j < R; j++) {
           if (graph.at(des, j).id == EMPTY_ID) {
             break;
@@ -319,14 +311,12 @@ struct NSG : public Builder {
         }
 
         {
-          LockGuard guard(locks[des]);
           for (int t = 0; t < (int)result.size(); t++) {
             graph.at(des, t) = result[t];
           }
         }
 
       } else {
-        LockGuard guard(locks[des]);
         for (int t = 0; t < R; t++) {
           if (graph.at(des, t).id == EMPTY_ID) {
             graph.at(des, t) = sn;
@@ -336,23 +326,6 @@ struct NSG : public Builder {
       }
     }
   }
-
-  // int tree_grow(std::vector<int> &degrees) {
-  //   int root = ep;
-  //   std::vector<bool> vis(nb);
-  //   int num_attached = 0;
-  //   int cnt = 0;
-  //   while (true) {
-  //     cnt = dfs(vis, root, cnt);
-  //     if (cnt >= nb) {
-  //       break;
-  //     }
-  //     std::vector<bool> vis2(nb);
-  //     root = attach_unlinked(vis, vis2, degrees);
-  //     num_attached += 1;
-  //   }
-  //   return num_attached;
-  // }
 
   int dfs(std::vector<bool> &vis, int root, int cnt) const {
     int node = root;
