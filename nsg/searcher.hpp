@@ -6,16 +6,15 @@
 #include <limits>
 #include <random>
 #include <string>
-#include <type_traits>
 #include <vector>
 
-#include "glass/common.hpp"
-#include "glass/graph.hpp"
-#include "glass/neighbor.hpp"
-#include "glass/quant/quant.hpp"
-#include "glass/utils.hpp"
+#include "nsg/common.hpp"
+#include "nsg/graph.hpp"
+#include "nsg/neighbor.hpp"
+#include "nsg/quant/quant.hpp"
+#include "nsg/utils.hpp"
 
-namespace glass {
+namespace nsg {
 
 struct SearcherBase {
   virtual void SetData(const float *data, int n, int dim) = 0;
@@ -160,29 +159,28 @@ template <typename Quantizer> struct Searcher : public SearcherBase {
 inline std::unique_ptr<SearcherBase> create_searcher(const Graph<int> &graph,
                                                      const std::string &metric,
                                                      int level = 1) {
-  auto m = metric_map[metric];
   if (level == 0) {
-    if (m == Metric::L2) {
+    if (metric == "L2") {
       return std::make_unique<Searcher<FP32Quantizer<Metric::L2>>>(graph);
-    } else if (m == Metric::IP) {
+    } else if (metric == "IP") {
       return std::make_unique<Searcher<FP32Quantizer<Metric::IP>>>(graph);
     } else {
       printf("Metric not suppported\n");
       return nullptr;
     }
   } else if (level == 1) {
-    if (m == Metric::L2) {
+    if (metric == "L2") {
       return std::make_unique<Searcher<SQ8Quantizer<Metric::L2>>>(graph);
-    } else if (m == Metric::IP) {
+    } else if (metric == "IP") {
       return std::make_unique<Searcher<SQ8Quantizer<Metric::IP>>>(graph);
     } else {
       printf("Metric not suppported\n");
       return nullptr;
     }
   } else if (level == 2) {
-    if (m == Metric::L2) {
+    if (metric == "L2") {
       return std::make_unique<Searcher<SQ4Quantizer<Metric::L2>>>(graph);
-    } else if (m == Metric::IP) {
+    } else if (metric == "IP") {
       return std::make_unique<Searcher<SQ4Quantizer<Metric::IP>>>(graph);
     } else {
       printf("Metric not suppported\n");
@@ -194,4 +192,4 @@ inline std::unique_ptr<SearcherBase> create_searcher(const Graph<int> &graph,
   }
 }
 
-} // namespace glass
+} // namespace nsg

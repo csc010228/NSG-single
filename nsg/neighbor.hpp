@@ -9,9 +9,9 @@
 #include <queue>
 #include <vector>
 
-#include "glass/memory.hpp"
+#include "nsg/memory.hpp"
 
-namespace glass {
+namespace nsg {
 
 namespace searcher {
 
@@ -52,6 +52,9 @@ template <typename dist_t = float> struct Neighbor {
 };
 
 template <typename dist_t> struct MaxHeap {
+  int size = 0, capacity;
+  // std::vector<Neighbor<dist_t>, align_alloc<Neighbor<dist_t>>> pool;// TODO：这里可以优化，但是貌似C++14并不支持
+  std::vector<Neighbor<dist_t>> pool;
   explicit MaxHeap(int capacity) : capacity(capacity), pool(capacity) {}
   void push(int u, dist_t dist) {
     if (size < capacity) {
@@ -84,11 +87,12 @@ template <typename dist_t> struct MaxHeap {
     }
     pool[i] = {u, dist};
   }
-  int size = 0, capacity;
-  std::vector<Neighbor<dist_t>, align_alloc<Neighbor<dist_t>>> pool;
 };
 
 template <typename dist_t> struct MinMaxHeap {
+  int size = 0, cur = 0, capacity;
+  // std::vector<Neighbor<dist_t>, align_alloc<Neighbor<dist_t>>> pool;// TODO：这里可以优化，但是貌似C++14并不支持
+  std::vector<Neighbor<dist_t>> pool;
   explicit MinMaxHeap(int capacity) : capacity(capacity), pool(capacity) {}
   bool push(int u, dist_t dist) {
     if (cur == capacity) {
@@ -128,12 +132,14 @@ template <typename dist_t> struct MinMaxHeap {
     --size;
     return ret;
   }
-
-  int size = 0, cur = 0, capacity;
-  std::vector<Neighbor<dist_t>, align_alloc<Neighbor<dist_t>>> pool;
 };
 
 template <typename dist_t> struct LinearPool {
+  int nb, size_ = 0, cur_ = 0, capacity_;
+  // std::vector<Neighbor<dist_t>, align_alloc<Neighbor<dist_t>>> data_;// TODO：这里可以优化，但是貌似C++14并不支持
+  std::vector<Neighbor<dist_t>> data_;
+  Bitset<uint64_t> vis;
+
   LinearPool(int n, int capacity, int = 0)
       : nb(n), capacity_(capacity), data_(capacity_ + 1), vis(n) {}
 
@@ -185,13 +191,14 @@ template <typename dist_t> struct LinearPool {
   int get_id(int id) const { return id & kMask; }
   void set_checked(int &id) { id |= 1 << 31; }
   bool is_checked(int id) { return id >> 31 & 1; }
-
-  int nb, size_ = 0, cur_ = 0, capacity_;
-  std::vector<Neighbor<dist_t>, align_alloc<Neighbor<dist_t>>> data_;
-  Bitset<uint64_t> vis;
 };
 
 template <typename dist_t> struct HeapPool {
+  int nb, size_ = 0, capacity_;
+  MinMaxHeap<dist_t> candidates;
+  MaxHeap<dist_t> retset;
+  Bitset<uint64_t> vis;
+
   HeapPool(int n, int capacity, int topk)
       : nb(n), capacity_(capacity), candidates(capacity), retset(topk), vis(n) {
   }
@@ -203,10 +210,6 @@ template <typename dist_t> struct HeapPool {
   bool has_next() const { return candidates.size > 0; }
   int id(int i) const { return retset.pool[i].id; }
   int capacity() const { return capacity_; }
-  int nb, size_ = 0, capacity_;
-  MinMaxHeap<dist_t> candidates;
-  MaxHeap<dist_t> retset;
-  Bitset<uint64_t> vis;
 };
 
 } // namespace searcher
@@ -276,4 +279,4 @@ inline int insert_into_pool(Neighbor *addr, int K, Neighbor nn) {
   return right;
 }
 
-} // namespace glass
+} // namespace nsg

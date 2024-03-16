@@ -3,13 +3,13 @@
 #include <random>
 #include <stack>
 
-#include "glass/builder.hpp"
-#include "glass/graph.hpp"
-#include "glass/neighbor.hpp"
-#include "glass/utils.hpp"
+#include "nsg/builder.hpp"
+#include "nsg/graph.hpp"
+#include "nsg/neighbor.hpp"
+#include "nsg/utils.hpp"
 #include "nndescent.hpp"
 
-namespace glass {
+namespace nsg {
 
 struct NSG : public Builder {
   int d;
@@ -400,4 +400,4 @@ struct NSG : public Builder {
   }
 };
 
-} // namespace glass
+} // namespace nsg

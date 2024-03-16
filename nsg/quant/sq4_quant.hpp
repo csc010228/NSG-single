@@ -1,14 +1,14 @@
 #pragma once
 
-#include "glass/common.hpp"
-#include "glass/memory.hpp"
-#include "glass/neighbor.hpp"
-#include "glass/quant/fp32_quant.hpp"
-#include "glass/simd/distance.hpp"
+#include "nsg/common.hpp"
+#include "nsg/memory.hpp"
+#include "nsg/neighbor.hpp"
+#include "nsg/quant/fp32_quant.hpp"
+#include "nsg/simd/distance.hpp"
 
 #include <cmath>
 
-namespace glass {
+namespace nsg {
 
 template <Metric metric, typename Reorderer = FP32Quantizer<metric>,
           int DIM = 0>
@@ -67,8 +67,7 @@ struct SQ4Quantizer {
   void reorder(const Pool &pool, const float *q, int *dst, int k) const {
     int cap = pool.capacity();
     auto computer = reorderer.get_computer(q);
-    searcher::MaxHeap<typename Reorderer::template Computer<0>::dist_type> heap(
-        k);
+    searcher::MaxHeap<typename Reorderer::template Computer<0>::dist_type> heap(k);
     for (int i = 0; i < cap; ++i) {
       if (i + 1 < cap) {
         computer.prefetch(pool.id(i + 1), 1);
@@ -105,4 +104,4 @@ struct SQ4Quantizer {
   }
 };
 
-} // namespace glass
+} // namespace nsg

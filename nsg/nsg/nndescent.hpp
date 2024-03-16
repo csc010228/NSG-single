@@ -6,12 +6,12 @@
 #include <string>
 #include <vector>
 
-#include "glass/graph.hpp"
-#include "glass/neighbor.hpp"
-#include "glass/simd/distance.hpp"
-#include "glass/utils.hpp"
+#include "nsg/graph.hpp"
+#include "nsg/neighbor.hpp"
+#include "nsg/simd/distance.hpp"
+#include "nsg/utils.hpp"
 
-namespace glass {
+namespace nsg {
 
 // 使用 NNDesent 算法构建出 KNNG 
 struct NNDescent {
@@ -296,4 +296,4 @@ struct NNDescent {
   }
 };
 
-} // namespace glass
+} // namespace nsg

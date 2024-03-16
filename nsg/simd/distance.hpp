@@ -8,11 +8,11 @@
 #include <arm_neon.h>
 #endif
 
-#include "glass/common.hpp"
-#include "glass/simd/avx2.hpp"
-#include "glass/simd/avx512.hpp"
+#include "nsg/common.hpp"
+#include "nsg/simd/avx2.hpp"
+#include "nsg/simd/avx512.hpp"
 
-namespace glass {
+namespace nsg {
 
 template <typename T1, typename T2, typename U, typename... Params>
 using Dist = U (*)(const T1 *, const T2 *, int, Params...);
@@ -366,4 +366,4 @@ inline int32_t L2SqrSQ4(const uint8_t *x, const uint8_t *y, int d) {
 #endif
 }
 
-} // namespace glass
+} // namespace nsg

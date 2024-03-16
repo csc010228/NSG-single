@@ -3,8 +3,8 @@
 #include <cmath>
 #include <algorithm>
 
-#include <glass/nsg/nsg.hpp>
-#include <glass/searcher.hpp>
+#include <nsg/nsg/nsg.hpp>
+#include <nsg/searcher.hpp>
 
 #define K_MAX 10
 #define K_MIN 3
@@ -24,7 +24,7 @@ float distance(const std::vector<float>& x, const std::vector<float>& p) {
 
 // ==========================================================================================
 
-std::unique_ptr<glass::SearcherBase> searcher;
+std::unique_ptr<nsg::SearcherBase> searcher;
 
 // Preprocess Part
 void preprocess() {
@@ -37,10 +37,11 @@ void preprocess() {
         }
     }
 
-    std::unique_ptr<glass::Builder> index = std::unique_ptr<glass::Builder>((glass::Builder *)new glass::NSG(D, "L2", 32, 50));
+    std::unique_ptr<nsg::Builder> index = std::unique_ptr<nsg::Builder>((nsg::Builder *)new nsg::NSG(D, "L2", 32, 50));
     index->Build(data, N);
-    glass::Graph<int> graph = index->GetGraph();
-    searcher = create_searcher(graph, "L2", 0);
+    nsg::Graph<int> graph = index->GetGraph();
+    int level = 2;
+    searcher = create_searcher(graph, "L2", level);
     searcher->SetData(data, N, D);
     searcher->SetEf(32);
     // delete data;

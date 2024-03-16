@@ -4,7 +4,7 @@
 #include <random>
 #include <unordered_set>
 
-namespace glass {
+namespace nsg {
 
 // 随机生成一个长度为size，元素的取值范围是[0, N - 1]的，按照严格升序排序的int类型数组
 inline void GenRandom(std::mt19937 &rng, int *addr, const int size,
@@ -39,11 +39,6 @@ struct RandomGenerator {
 
   /// generate random integer between 0 and max-1
   int rand_int(int max) { return rand_int() % max; }
-
-  /// between 0 and 1
-  // float rand_float() { return mt() / float(mt.max()); }
-
-  // double rand_double() { return mt() / double(mt.max()); }
 };
 
-} // namespace glass
+} // namespace nsg

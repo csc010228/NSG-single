@@ -6,10 +6,10 @@
 #include <memory>
 #include <vector>
 
-#include "glass/memory.hpp"
-#include "glass/simd/distance.hpp"
+#include "nsg/memory.hpp"
+#include "nsg/simd/distance.hpp"
 
-namespace glass {
+namespace nsg {
 
 constexpr int EMPTY_ID = -1;
 
@@ -67,7 +67,8 @@ template <typename node_t> struct Graph {
   }
 
   void save(const std::string &filename) const {
-    static_assert(std::is_same_v<node_t, int32_t>);
+    // static_assert(std::is_same_v<node_t, int32_t>);
+    static_assert(std::is_same<node_t, int32_t>::value);
     std::ofstream writer(filename.c_str(), std::ios::binary);
     int nep = eps.size();
     writer.write((char *)&nep, 4);
@@ -79,7 +80,8 @@ template <typename node_t> struct Graph {
   }
 
   void load(const std::string &filename) {
-    static_assert(std::is_same_v<node_t, int32_t>);
+    // static_assert(std::is_same_v<node_t, int32_t>);
+    static_assert(std::is_same<node_t, int32_t>::value);
     free(data);
     std::ifstream reader(filename.c_str(), std::ios::binary);
     int nep;
@@ -97,4 +99,4 @@ template <typename node_t> struct Graph {
   }
 };
 
-} // namespace glass
+} // namespace nsg
