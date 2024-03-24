@@ -19,7 +19,7 @@ struct NSG : public Builder {
   int C;
   int nb;
   float *data;
-  int ep;
+  int ep;                             // enter point， 图搜索的起点
   Graph<int> final_graph;
   RandomGenerator rng; ///< random generator
   Dist<float, float, float> dist_func;

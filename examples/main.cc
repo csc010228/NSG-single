@@ -44,6 +44,7 @@ void preprocess() {
     searcher = create_searcher(graph, "L2", level);
     searcher->SetData(data, N, D);
     searcher->SetEf(32);
+    // searcher->Optimize();
     // delete data;
 }
 

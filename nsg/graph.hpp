@@ -20,7 +20,7 @@ template <typename node_t> struct Graph {
 
   node_t *data = nullptr;                   // N * K 大小的邻接列表
 
-  std::vector<int> eps;
+  std::vector<int> eps;                     // enter points，图搜索的起点
 
   Graph() = default;
 
@@ -47,18 +47,20 @@ template <typename node_t> struct Graph {
 
   ~Graph() { free(data); }
 
-  // 获取编号u的数据的所有出边
+  // 获取编号 u 的数据的所有出边
   const int *edges(int u) const { return data + K * u; }
   int *edges(int u) { return data + K * u; }
 
-  // 获取边<i, j>
+  // 获取编号 i 的数据的第 j 条出边连接的那个点
   node_t at(int i, int j) const { return data[i * K + j]; }
   node_t &at(int i, int j) { return data[i * K + j]; }
 
+  // 提取将编号 u 的数据的 lines 条出边保存到cache中
   void prefetch(int u, int lines) const {
     mem_prefetch((char *)edges(u), lines);
   }
 
+  // 设置搜索的起点
   template <typename Pool, typename Computer>
   void initialize_search(Pool &pool, const Computer &computer) const {
     for (auto ep : eps) {

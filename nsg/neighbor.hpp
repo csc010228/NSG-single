@@ -134,15 +134,20 @@ template <typename dist_t> struct MinMaxHeap {
   }
 };
 
+// 线性池，用于存储查询点 q 在空间中的多个附近节点，这些邻居节点会按照和 q 距离由近到远顺序排列
 template <typename dist_t> struct LinearPool {
-  int nb, size_ = 0, cur_ = 0, capacity_;
+  int nb;                     // 数据集中所有点的个数
+  int size_ = 0;              // 当前存储的附近节点个数
+  int cur_ = 0;               // 位置指针
+  int capacity_;              // 最多可以放置的附近节点的个数
   // std::vector<Neighbor<dist_t>, align_alloc<Neighbor<dist_t>>> data_;// TODO：这里可以优化，但是貌似C++14并不支持
-  std::vector<Neighbor<dist_t>> data_;
+  std::vector<Neighbor<dist_t>> data_;        // 存储 q 的附近节点
   Bitset<uint64_t> vis;
 
   LinearPool(int n, int capacity, int = 0)
       : nb(n), capacity_(capacity), data_(capacity_ + 1), vis(n) {}
 
+  // 二分法查找该 LinearPool 中与 q 的距离最接近 dist 的附近节点在该 LinearPool中的位置
   int find_bsearch(dist_t dist) {
     int lo = 0, hi = size_;
     while (lo < hi) {
@@ -156,6 +161,9 @@ template <typename dist_t> struct LinearPool {
     return lo;
   }
 
+  // 将 q 的一个附近节点插入该 LinearPool 中， u 是该附近节点的 id ， dist是该附近节点距离 q 的距离
+  // 插入之后的 LinearPool 中的邻居节点仍旧按照和该点距离由近到远顺序排列
+  // 如果位置指针 cur_ 在插入位置的后面，那么需要将其指向当前插入的邻居节点位置
   bool insert(int u, dist_t dist) {
     if (size_ == capacity_ && dist >= data_[size_ - 1].distance) {
       return false;
@@ -173,6 +181,8 @@ template <typename dist_t> struct LinearPool {
     return true;
   }
 
+  // 将当前位置指针指向的邻居节点弹出并将其设置为已访问，返回弹出的邻居节点的id
+  // 把位置指针向后移动到当前没有访问过的第一个邻居节点处
   int pop() {
     set_checked(data_[cur_].id);
     int pre = cur_;

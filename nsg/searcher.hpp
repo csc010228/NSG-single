@@ -26,8 +26,8 @@ struct SearcherBase {
 
 template <typename Quantizer> struct Searcher : public SearcherBase {
 
-  int d;
-  int nb;
+  int d;                        // 数据维度
+  int nb;                       // 数据个数
   Graph<int> graph;
   Quantizer quant;
 
@@ -131,20 +131,20 @@ template <typename Quantizer> struct Searcher : public SearcherBase {
   void SearchImpl(Pool &pool, const Computer &computer) const {
     while (pool.has_next()) {
       auto u = pool.pop();
-      graph.prefetch(u, graph_po);
-      for (int i = 0; i < po; ++i) {
-        int to = graph.at(u, i);
-        computer.prefetch(to, pl);
-      }
+      // graph.prefetch(u, graph_po);
+      // for (int i = 0; i < po; ++i) {
+      //   int to = graph.at(u, i);
+      //   computer.prefetch(to, pl);
+      // }
       for (int i = 0; i < graph.K; ++i) {
         int v = graph.at(u, i);
         if (v == -1) {
           break;
         }
-        if (i + po < graph.K && graph.at(u, i + po) != -1) {
-          int to = graph.at(u, i + po);
-          computer.prefetch(to, pl);
-        }
+        // if (i + po < graph.K && graph.at(u, i + po) != -1) {
+        //   int to = graph.at(u, i + po);
+        //   computer.prefetch(to, pl);
+        // }
         if (pool.vis.get(v)) {
           continue;
         }
